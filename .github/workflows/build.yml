@@ -15,7 +15,11 @@ jobs:
       # nacheinander, damit beide Jobs in dasselbe Release schreiben
       max-parallel: 1
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            files: dist/*.dmg
+          - os: windows-latest
+            files: dist/*.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +38,5 @@ jobs:
           name: VOD Loader 1.0.${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           make_latest: true
-          files: |
-            dist/*.dmg
-            dist/*.exe
+          files: ${{ matrix.files }}
           fail_on_unmatched_files: true
