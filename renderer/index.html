@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'" />
+  <title>VOD Loader</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="titlebar"></div>
+
+  <main>
+    <!-- Einrichtung -->
+    <section id="view-setup" class="view center">
+      <div class="app-icon"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></div>
+      <h2>Einen Moment …</h2>
+      <p class="muted">VOD Loader wird zum ersten Mal eingerichtet.</p>
+      <div class="bar"><div class="bar-fill" id="setup-fill"></div></div>
+    </section>
+
+    <!-- Start -->
+    <section id="view-start" class="view center">
+      <div class="app-icon"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></div>
+      <h1>VOD Loader</h1>
+      <p class="muted">Füge den Link zu einem Twitch-VOD ein.</p>
+      <form id="url-form" class="field" autocomplete="off">
+        <input id="url" type="text" spellcheck="false" placeholder="twitch.tv/videos/…" />
+        <button type="submit" id="go" class="field-btn" aria-label="Weiter">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+        </button>
+      </form>
+      <p id="start-error" class="error" hidden></p>
+    </section>
+
+    <!-- VOD gefunden -->
+    <section id="view-info" class="view">
+      <div class="card">
+        <div class="thumb"><img id="thumb" alt="" /><span id="duration" class="badge"></span></div>
+        <div class="card-body">
+          <h3 id="title"></h3>
+          <p id="meta" class="muted small"></p>
+        </div>
+      </div>
+
+      <div class="group">
+        <label class="row">
+          <span>Qualität</span>
+          <span class="select-wrap"><select id="quality"></select></span>
+        </label>
+        <label class="row">
+          <span>Nur Ausschnitt</span>
+          <input type="checkbox" id="section-toggle" class="switch" />
+        </label>
+        <div id="section-rows" class="collapse"><div>
+          <label class="row">
+            <span>Von</span>
+            <input id="start" class="time" type="text" placeholder="0:00:00" inputmode="numeric" />
+          </label>
+          <label class="row">
+            <span>Bis</span>
+            <input id="end" class="time" type="text" placeholder="0:00:00" inputmode="numeric" />
+          </label>
+        </div></div>
+        <button type="button" class="row link-row" id="dir-btn">
+          <span>Speichern in</span>
+          <span class="value"><span id="dir-name">Downloads</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
+
+      <p id="info-error" class="error" hidden></p>
+
+      <div class="actions">
+        <button id="download" class="btn primary">Laden</button>
+        <button id="back" class="btn plain">Anderes VOD</button>
+      </div>
+    </section>
+
+    <!-- Lädt -->
+    <section id="view-progress" class="view center">
+      <img id="p-thumb" class="mini-thumb" alt="" />
+      <h3 id="p-title" class="clamp"></h3>
+      <div class="bar big"><div class="bar-fill" id="p-fill"></div></div>
+      <p id="p-stats" class="muted small tabular">Wird vorbereitet …</p>
+      <button id="cancel" class="btn plain">Abbrechen</button>
+    </section>
+
+    <!-- Fertig -->
+    <section id="view-done" class="view center">
+      <div class="check"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
+      <h2>Fertig</h2>
+      <p id="d-file" class="muted small clamp"></p>
+      <div class="actions">
+        <button id="reveal" class="btn primary">Im Finder zeigen</button>
+        <button id="again" class="btn plain">Weiteres VOD</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

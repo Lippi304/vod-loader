@@ -1,0 +1,494 @@
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --line: rgba(0, 0, 0, 0.08);
+  --fill: rgba(120, 120, 128, 0.12);
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --green: #34c759;
+  --red: #ff3b30;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --surface: #2c2c2e;
+    --text: #f5f5f7;
+    --muted: #98989d;
+    --line: rgba(255, 255, 255, 0.08);
+    --fill: rgba(120, 120, 128, 0.24);
+    --accent: #0a84ff;
+    --accent-hover: #409cff;
+    --green: #30d158;
+    --red: #ff453a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Auf dem Mac scheint die Fenster-Vibrancy leicht durch. */
+html[data-platform='darwin'] {
+  --bg: rgba(245, 245, 247, 0.72);
+}
+@media (prefers-color-scheme: dark) {
+  html[data-platform='darwin'] {
+    --bg: rgba(28, 28, 30, 0.6);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+
+.titlebar {
+  height: 0;
+  -webkit-app-region: drag;
+}
+html[data-platform='darwin'] .titlebar {
+  height: 44px;
+}
+
+main {
+  height: calc(100% - 0px);
+  display: grid;
+  place-items: center;
+  padding: 24px 32px 32px;
+  overflow-y: auto;
+}
+html[data-platform='darwin'] main {
+  height: calc(100% - 44px);
+  padding-top: 0;
+}
+
+.view {
+  display: none;
+  width: 100%;
+  max-width: 400px;
+  flex-direction: column;
+  gap: 16px;
+  animation: in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.view.active {
+  display: flex;
+}
+.view.center {
+  align-items: center;
+  text-align: center;
+}
+
+@keyframes in {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.tabular { font-variant-numeric: tabular-nums; }
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+.view.center h1 + .muted { margin-top: -10px; }
+.view.center h2 + .muted { margin-top: -10px; }
+
+/* App-Icon */
+.app-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #a970ff 0%, #6c3ce0 55%, #4b21b8 100%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px rgba(108, 60, 224, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  margin-bottom: 4px;
+}
+.app-icon svg {
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Eingabefeld */
+.field {
+  width: 100%;
+  position: relative;
+  margin-top: 8px;
+}
+.field input {
+  width: 100%;
+  height: 48px;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  padding: 0 56px 0 20px;
+  outline: none;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  user-select: text;
+}
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent), var(--shadow);
+}
+.field input::placeholder { color: var(--muted); opacity: 0.7; }
+.field-btn {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s, opacity 0.2s;
+}
+.field-btn:hover { background: var(--accent-hover); }
+.field-btn:active { transform: scale(0.94); }
+.field-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.field.loading .field-btn svg { display: none; }
+.field.loading .field-btn::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error {
+  color: var(--red);
+  font-size: 13px;
+}
+
+/* Karte */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--fill);
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.card-body {
+  padding: 12px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.card-body h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Gruppierte Liste (wie in den Systemeinstellungen) */
+.group {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 16px;
+  gap: 12px;
+  position: relative;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  text-align: left;
+}
+.row + .row::before,
+.collapse .row::before,
+.collapse + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+}
+.link-row { cursor: pointer; }
+.link-row:active { background: var(--fill); }
+.value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  max-width: 60%;
+}
+.value span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chev {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+  flex: none;
+}
+
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.collapse > * { overflow: hidden; min-height: 0; }
+.collapse.open { grid-template-rows: 1fr; }
+
+/* Select */
+.select-wrap {
+  position: relative;
+  color: var(--muted);
+}
+.select-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  padding: 6px 22px 6px 6px;
+  text-align: right;
+  cursor: pointer;
+  outline: none;
+}
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-70%) rotate(45deg);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.select-wrap select option { color: initial; }
+
+/* Zeitfelder */
+.time {
+  width: 96px;
+  text-align: right;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--fill);
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  outline: none;
+  user-select: text;
+}
+.time:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+.time.invalid { box-shadow: 0 0 0 2px var(--red); }
+
+/* Schalter */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 42px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--fill);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s;
+  flex: none;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.switch:checked { background: var(--green); }
+.switch:checked::after { transform: translateX(16px); }
+
+/* Buttons */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+.btn {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  border: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  height: 44px;
+  padding: 0 20px;
+  transition: background 0.2s, transform 0.12s, opacity 0.2s;
+}
+.btn:active { transform: scale(0.98); }
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+}
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.primary:disabled { opacity: 0.5; cursor: default; }
+.btn.plain {
+  background: none;
+  color: var(--accent);
+  height: 36px;
+}
+.btn.plain:hover { opacity: 0.75; }
+
+/* Fortschritt */
+.bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--fill);
+  overflow: hidden;
+}
+.bar.big { height: 8px; border-radius: 4px; margin-top: 4px; }
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+.bar.indeterminate .bar-fill {
+  width: 30%;
+  animation: slide 1.3s ease-in-out infinite;
+}
+@keyframes slide {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(360%); }
+}
+#view-setup .bar { max-width: 220px; margin-top: 8px; }
+
+.mini-thumb {
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  background: var(--fill);
+  margin-bottom: 6px;
+}
+
+/* Häkchen */
+.check svg {
+  width: 72px;
+  height: 72px;
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.check circle {
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: draw 0.5s ease-out forwards;
+}
+.check path {
+  stroke-dasharray: 36;
+  stroke-dashoffset: 36;
+  animation: draw 0.35s 0.4s ease-out forwards;
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
