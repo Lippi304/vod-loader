@@ -65,5 +65,9 @@
       "perMachine": false,
       "shortcutName": "VOD Loader"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lippi304/vod-loader.git"
   }
 }

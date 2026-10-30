@@ -39,9 +39,8 @@ Das Ergebnis liegt in `dist/` (`.dmg` auf dem Mac, `.exe` unter Windows).
 Mac-Builds gehen nur auf einem Mac, Windows-Builds nur unter Windows.
 
 **Variante B, über GitHub (beide auf einmal):**
-Repo auf GitHub hochladen → Tab **Actions** → **Build** → **Run workflow**.
-Nach ein paar Minuten liegen DMG und EXE unten bei *Artifacts* zum Download.
-Außerdem startet der Build automatisch bei jedem Push auf `main` und bei Tags wie `v1.0.0`.
+Jeder Push auf `main` startet automatisch einen Build (manuell: **Actions → Build → Run workflow**).
+Nach ca. 10 Minuten liegen DMG und EXE rechts im Repo unter **Releases** zum Download.
 
 ## Erster Start: Sicherheitswarnung
 
