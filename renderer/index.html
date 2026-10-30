@@ -31,6 +31,7 @@
         </button>
       </form>
       <p id="start-error" class="error" hidden></p>
+      <button id="to-queue" class="btn plain" hidden>Downloads ansehen</button>
     </section>
 
     <!-- VOD gefunden -->
@@ -76,23 +77,16 @@
       </div>
     </section>
 
-    <!-- Lädt -->
-    <section id="view-progress" class="view center">
-      <img id="p-thumb" class="mini-thumb" alt="" />
-      <h3 id="p-title" class="clamp"></h3>
-      <div class="bar big"><div class="bar-fill" id="p-fill"></div></div>
-      <p id="p-stats" class="muted small tabular">Wird vorbereitet …</p>
-      <button id="cancel" class="btn plain">Abbrechen</button>
-    </section>
-
-    <!-- Fertig -->
-    <section id="view-done" class="view center">
-      <div class="check"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
-      <h2>Fertig</h2>
-      <p id="d-file" class="muted small clamp"></p>
+    <!-- Downloads / Warteschlange -->
+    <section id="view-queue" class="view">
+      <div class="queue-head">
+        <h2 id="q-title">Downloads</h2>
+        <p id="q-sub" class="muted small"></p>
+      </div>
+      <ul id="q-list" class="group q-list"></ul>
       <div class="actions">
-        <button id="reveal" class="btn primary">Im Finder zeigen</button>
-        <button id="again" class="btn plain">Weiteres VOD</button>
+        <button id="q-add" class="btn primary">Weiteres VOD hinzufügen</button>
+        <button id="q-folder" class="btn plain">Im Finder zeigen</button>
       </div>
     </section>
   </main>

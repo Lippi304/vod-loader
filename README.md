@@ -10,8 +10,9 @@ Läuft auf **macOS (Apple Silicon)** und **Windows**. Unter der Haube arbeiten
 - Link einfügen → Vorschaubild, Titel, Kanal, Länge
 - Qualität wählen (z. B. 1080p60, 720p60 … oder nur Audio)
 - Optional nur einen Ausschnitt laden (Von / Bis)
+- Warteschlange: mehrere VODs hinzufügen, sie werden nacheinander geladen
 - Speicherort wählen (wird gemerkt, Standard: Downloads)
-- Fortschritt mit Geschwindigkeit und Restzeit, Abbrechen jederzeit möglich
+- Fortschritt mit Geschwindigkeit und Restzeit, auch im Dock bzw. in der Taskleiste; Abbrechen jederzeit möglich
 - Hell- und Dunkelmodus automatisch nach System
 
 ## Direkt starten (ohne Installation)

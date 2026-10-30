@@ -60,6 +60,21 @@ function createWindow() {
     return { action: 'deny' };
   });
   win.webContents.on('will-navigate', (e) => e.preventDefault());
+
+  // Nicht versehentlich mitten im Download schließen.
+  win.on('close', (e) => {
+    if (!current) return;
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'warning',
+      buttons: ['Weiterladen', 'Abbrechen und schließen'],
+      defaultId: 0,
+      cancelId: 0,
+      message: 'Es läuft noch ein Download.',
+      detail: 'Wenn du das Fenster schließt, werden der laufende Download und die Warteschlange abgebrochen.',
+    });
+    if (choice === 0) e.preventDefault();
+    else current.cancel();
+  });
 }
 
 const send = (channel, payload) => {
@@ -93,7 +108,11 @@ ipcMain.handle('choose-dir', async () => {
 
 ipcMain.handle('download', async (_e, opts) => {
   if (current) throw new Error('Es läuft bereits ein Download.');
-  const job = ytdlp.download({ ...opts, dir: downloadDir() }, (p) => send('progress', p));
+  const job = ytdlp.download({ ...opts, dir: downloadDir() }, (p) => {
+    send('progress', p);
+    // Fortschritt im Dock (Mac) bzw. in der Taskleiste (Windows)
+    if (win && !win.isDestroyed()) win.setProgressBar(p.pct == null ? 2 : p.pct);
+  });
   current = job;
   try {
     const res = await job.done;
@@ -103,6 +122,7 @@ ipcMain.handle('download', async (_e, opts) => {
     throw err;
   } finally {
     current = null;
+    if (win && !win.isDestroyed()) win.setProgressBar(-1);
   }
 });
 

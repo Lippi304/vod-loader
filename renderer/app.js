@@ -6,10 +6,15 @@ const $ = (id) => document.getElementById(id);
 
 document.documentElement.dataset.platform = api.platform;
 const isMac = api.platform === 'darwin';
-$('reveal').textContent = isMac ? 'Im Finder zeigen' : 'Im Explorer zeigen';
+$('q-folder').textContent = isMac ? 'Im Finder zeigen' : 'Im Explorer zeigen';
 
-let vod = null;
-let lastFile = null;
+let vod = null;          // aktuell angezeigtes VOD (Info-Ansicht)
+const queue = [];        // alle Downloads dieser Sitzung
+let running = false;
+let nextKey = 1;
+
+const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ICON_REVEAL = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>';
 
 // ---------- Hilfsfunktionen ----------
 function show(name) {
@@ -48,7 +53,7 @@ function fmtSpeed(bps) {
 
 function fmtEta(sec) {
   if (sec == null || !Number.isFinite(sec)) return '';
-  if (sec < 60) return 'noch wenige Sekunden';
+  if (sec < 60) return 'noch wenige Sek.';
   const min = Math.round(sec / 60);
   if (min < 60) return `noch ${min} Min.`;
   return `noch ${Math.floor(min / 60)} Std. ${min % 60} Min.`;
@@ -59,6 +64,14 @@ function toSeconds(str) {
   if (!s) return null;
   if (!/^\d+(:\d{1,2}){0,2}$/.test(s)) return NaN;
   return s.split(':').map(Number).reduce((a, n) => a * 60 + n, 0);
+}
+
+function goStart() {
+  $('url').value = '';
+  setError($('start-error'), '');
+  updateStartLink();
+  show('start');
+  $('url').focus();
 }
 
 // ---------- Start ----------
@@ -74,14 +87,24 @@ async function init() {
     await api.setup();
     const d = await api.getDir();
     $('dir-name').textContent = d.name;
-    show('start');
-    $('url').focus();
+    goStart();
   } catch (err) {
     $('view-setup').querySelector('h2').textContent = 'Einrichtung fehlgeschlagen';
     $('view-setup').querySelector('p').textContent = cleanError(err) + ' Prüfe deine Internetverbindung und starte die App neu.';
     fill.parentElement.hidden = true;
   }
 }
+
+function updateStartLink() {
+  const open = queue.filter((q) => q.status === 'queued' || q.status === 'active').length;
+  const btn = $('to-queue');
+  btn.hidden = queue.length === 0;
+  btn.textContent = open ? `Downloads ansehen (${open} offen)` : 'Downloads ansehen';
+}
+$('to-queue').addEventListener('click', () => {
+  renderQueue();
+  show('queue');
+});
 
 // ---------- Link prüfen ----------
 const form = $('url-form');
@@ -140,6 +163,8 @@ function renderInfo() {
   $('end').value = '';
   $('end').placeholder = fmtDuration(vod.duration) || '0:00:00';
   setError($('info-error'), '');
+  $('download').textContent = running ? 'Zur Warteschlange hinzufügen' : 'Laden';
+  $('back').textContent = queue.length ? 'Abbrechen' : 'Anderes VOD';
 }
 
 // ---------- Optionen ----------
@@ -157,13 +182,8 @@ $('dir-btn').addEventListener('click', async () => {
   if (d) $('dir-name').textContent = d.name;
 });
 
-$('back').addEventListener('click', () => {
-  $('url').value = '';
-  show('start');
-  $('url').focus();
-});
+$('back').addEventListener('click', goStart);
 
-// ---------- Download ----------
 function validateSection() {
   if (!$('section-toggle').checked) return { start: null, end: null };
   const s = toSeconds($('start').value);
@@ -185,67 +205,189 @@ function validateSection() {
   return { start: fmtDuration(start), end: fmtDuration(end) };
 }
 
-$('download').addEventListener('click', async () => {
+// ---------- In die Warteschlange ----------
+$('download').addEventListener('click', () => {
   setError($('info-error'), '');
   const sec = validateSection();
   if (sec.error) return setError($('info-error'), sec.error);
 
   const opt = $('quality').selectedOptions[0];
-  $('p-thumb').src = vod.thumbnail || '';
-  $('p-title').textContent = vod.title;
-  $('p-fill').style.width = '0%';
-  $('p-fill').parentElement.classList.add('indeterminate');
-  $('p-stats').textContent = 'Wird vorbereitet …';
-  show('progress');
+  const dup = queue.find(
+    (q) => q.vod.id === vod.id && q.start === sec.start && q.end === sec.end &&
+      (q.status === 'queued' || q.status === 'active')
+  );
+  if (dup) return setError($('info-error'), 'Dieses VOD ist schon in der Warteschlange.');
 
-  try {
-    const res = await api.download({
-      url: vod.url,
-      id: vod.id,
-      formatId: opt.value,
-      audio: !!opt.dataset.audio,
-      start: sec.start,
-      end: sec.end,
-    });
-    if (res.cancelled) {
-      show('info');
-      return;
-    }
-    lastFile = res.filePath;
-    $('d-file').textContent = lastFile ? lastFile.split(/[\\/]/).pop() : '';
-    show('done');
-  } catch (err) {
-    show('info');
-    setError($('info-error'), cleanError(err));
-  }
+  queue.push({
+    key: nextKey++,
+    vod,
+    formatId: opt.value,
+    audio: !!opt.dataset.audio,
+    quality: opt.textContent,
+    start: sec.start,
+    end: sec.end,
+    status: 'queued',
+    pct: null,
+    stats: '',
+    filePath: null,
+    error: '',
+  });
+  renderQueue();
+  show('queue');
+  processQueue();
 });
 
-api.onProgress((p) => {
-  const bar = $('p-fill').parentElement;
-  if (p.pct == null) {
-    bar.classList.add('indeterminate');
-    $('p-stats').textContent = 'Wird geladen …';
+async function processQueue() {
+  if (running) return;
+  const item = queue.find((q) => q.status === 'queued');
+  if (!item) {
+    renderQueue();
     return;
   }
-  bar.classList.remove('indeterminate');
-  const pct = Math.max(0, Math.min(100, p.pct * 100));
-  $('p-fill').style.width = `${pct}%`;
-  const parts = [`${Math.floor(pct)} %`, fmtSpeed(p.speed), fmtEta(p.eta)].filter(Boolean);
-  if (pct >= 99.5) parts.splice(0, parts.length, 'Wird fertiggestellt …');
-  $('p-stats').textContent = parts.join(' · ');
+  running = true;
+  item.status = 'active';
+  item.stats = 'Wird vorbereitet …';
+  renderQueue();
+  try {
+    const res = await api.download({
+      url: item.vod.url,
+      id: item.vod.id,
+      formatId: item.formatId,
+      audio: item.audio,
+      start: item.start,
+      end: item.end,
+    });
+    if (res.cancelled) {
+      item.status = 'cancelled';
+    } else {
+      item.status = 'done';
+      item.filePath = res.filePath;
+    }
+  } catch (err) {
+    item.status = 'error';
+    item.error = cleanError(err);
+  }
+  running = false;
+  processQueue();
+}
+
+api.onProgress((p) => {
+  const item = queue.find((q) => q.status === 'active');
+  if (!item) return;
+  if (p.pct == null) {
+    item.pct = null;
+    item.stats = 'Wird geladen …';
+  } else {
+    item.pct = Math.max(0, Math.min(1, p.pct));
+    const pct = item.pct * 100;
+    item.stats = pct >= 99.5
+      ? 'Wird fertiggestellt …'
+      : [`${Math.floor(pct)} %`, fmtSpeed(p.speed), fmtEta(p.eta)].filter(Boolean).join(' · ');
+  }
+  updateActiveRow(item);
 });
 
-$('cancel').addEventListener('click', () => {
-  $('p-stats').textContent = 'Wird abgebrochen …';
-  api.cancel();
-});
+// ---------- Liste anzeigen ----------
+function statusText(q) {
+  switch (q.status) {
+    case 'queued': return `Wartet · ${q.quality}${q.start ? ` · ${q.start}–${q.end}` : ''}`;
+    case 'active': return q.stats;
+    case 'done': return 'Fertig';
+    case 'cancelled': return 'Abgebrochen';
+    case 'error': return q.error || 'Fehler';
+    default: return '';
+  }
+}
 
-// ---------- Fertig ----------
-$('reveal').addEventListener('click', () => api.reveal(lastFile));
-$('again').addEventListener('click', () => {
-  $('url').value = '';
-  show('start');
-  $('url').focus();
+function renderQueue() {
+  const list = $('q-list');
+  list.innerHTML = '';
+  for (const q of queue) {
+    const li = document.createElement('li');
+    li.className = `q-item ${q.status}`;
+    li.dataset.key = q.key;
+
+    const img = document.createElement('img');
+    img.className = 'q-thumb';
+    img.alt = '';
+    img.src = q.vod.thumbnail || '';
+
+    const body = document.createElement('div');
+    body.className = 'q-body';
+    const name = document.createElement('div');
+    name.className = 'q-name';
+    name.textContent = q.vod.title;
+    name.title = q.vod.title;
+    const bar = document.createElement('div');
+    bar.className = 'bar' + (q.pct == null ? ' indeterminate' : '');
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    fill.style.width = q.pct == null ? '' : `${q.pct * 100}%`;
+    bar.appendChild(fill);
+    const status = document.createElement('div');
+    status.className = 'q-status';
+    status.textContent = statusText(q);
+    body.append(name, bar, status);
+
+    const btn = document.createElement('button');
+    btn.className = 'q-btn';
+    if (q.status === 'done') {
+      btn.innerHTML = ICON_REVEAL;
+      btn.title = isMac ? 'Im Finder zeigen' : 'Im Explorer zeigen';
+      btn.onclick = () => api.reveal(q.filePath);
+    } else if (q.status === 'active') {
+      btn.innerHTML = ICON_X;
+      btn.title = 'Abbrechen';
+      btn.onclick = () => {
+        q.stats = 'Wird abgebrochen …';
+        updateActiveRow(q);
+        api.cancel();
+      };
+    } else {
+      btn.innerHTML = ICON_X;
+      btn.title = 'Entfernen';
+      btn.onclick = () => {
+        queue.splice(queue.indexOf(q), 1);
+        if (!queue.length) return goStart();
+        renderQueue();
+      };
+    }
+
+    li.append(img, body, btn);
+    list.appendChild(li);
+  }
+  renderHeader();
+}
+
+function updateActiveRow(item) {
+  const li = $('q-list').querySelector(`[data-key="${item.key}"]`);
+  if (!li) return;
+  const bar = li.querySelector('.bar');
+  bar.classList.toggle('indeterminate', item.pct == null);
+  li.querySelector('.bar-fill').style.width = item.pct == null ? '' : `${item.pct * 100}%`;
+  li.querySelector('.q-status').textContent = item.stats;
+  renderHeader();
+}
+
+function renderHeader() {
+  const total = queue.length;
+  const done = queue.filter((q) => q.status === 'done').length;
+  const open = queue.filter((q) => q.status === 'queued' || q.status === 'active').length;
+  const failed = queue.filter((q) => q.status === 'error').length;
+  if (open) {
+    $('q-title').textContent = 'Downloads';
+    $('q-sub').textContent = `${done} von ${total} fertig${open > 1 ? ` · ${open - 1} in der Warteschlange` : ''}`;
+  } else {
+    $('q-title').textContent = 'Fertig';
+    $('q-sub').textContent = `${done} von ${total} fertig${failed ? ` · ${failed} fehlgeschlagen` : ''}`;
+  }
+  updateStartLink();
+}
+
+$('q-add').addEventListener('click', goStart);
+$('q-folder').addEventListener('click', () => {
+  const last = [...queue].reverse().find((q) => q.filePath);
+  api.reveal(last ? last.filePath : null);
 });
 
 init();
