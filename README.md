@@ -41,7 +41,7 @@ Mac-Builds gehen nur auf einem Mac, Windows-Builds nur unter Windows.
 **Variante B, über GitHub (beide auf einmal):**
 Repo auf GitHub hochladen → Tab **Actions** → **Build** → **Run workflow**.
 Nach ein paar Minuten liegen DMG und EXE unten bei *Artifacts* zum Download.
-Alternativ startet der Build automatisch bei einem Tag wie `v1.0.0`.
+Außerdem startet der Build automatisch bei jedem Push auf `main` und bei Tags wie `v1.0.0`.
 
 ## Erster Start: Sicherheitswarnung
 
