@@ -8,6 +8,8 @@ Runs on **macOS (Apple Silicon)** and **Windows**. Under the hood,
 ## Features
 
 - Paste a link → thumbnail, title, channel, duration
+- Or type a channel name → the VODs from the last 14 days as cards (grid or list); tick the ones
+  you want, with one quality for all of them or a separate quality per VOD
 - Pick a quality (e.g. 1080p60, 720p60 … or audio only)
 - Optionally download just a section (from / to)
 - Queue: add several VODs, they are downloaded one after another
@@ -54,6 +56,9 @@ After about 10 minutes the DMG and EXE are available under **Releases** on the r
 
 - Subscriber-only VODs are not supported (that would require a Twitch login).
 - VODs only, no clips and no chat. That is intentional.
+- In the channel view you pick whole VODs and a quality step (Best, 1080p, 720p, 480p, audio only).
+  If a VOD lacks that step, the next lower one is used. Sections (from / to) need a single VOD link.
+- The channel view shows up to the 30 newest VODs, limited to the last 14 days.
 - The Mac build is for Apple Silicon only (M1 and newer).
 
 ## License

@@ -86,7 +86,7 @@ async function init() {
   try {
     await api.setup();
     const d = await api.getDir();
-    $('dir-name').textContent = d.name;
+    setDirName(d.name);
     goStart();
   } catch (err) {
     $('view-setup').querySelector('h2').textContent = 'Setup failed';
@@ -117,9 +117,15 @@ async function lookup() {
   setError($('start-error'), '');
   form.classList.add('loading');
   try {
-    vod = await api.info(value);
-    renderInfo();
-    show('info');
+    const res = await api.lookup(value);
+    if (res.kind === 'channel') {
+      renderChannel(res);
+      show('channel');
+    } else {
+      vod = res.vod;
+      renderInfo();
+      show('info');
+    }
   } catch (err) {
     setError($('start-error'), cleanError(err));
   } finally {
@@ -177,10 +183,17 @@ for (const id of ['start', 'end']) {
   $(id).addEventListener('input', () => $(id).classList.remove('invalid'));
 }
 
-$('dir-btn').addEventListener('click', async () => {
+function setDirName(name) {
+  $('dir-name').textContent = name;
+  $('ch-dir-name').textContent = name;
+}
+
+async function chooseDir() {
   const d = await api.chooseDir();
-  if (d) $('dir-name').textContent = d.name;
-});
+  if (d) setDirName(d.name);
+}
+$('dir-btn').addEventListener('click', chooseDir);
+$('ch-dir-btn').addEventListener('click', chooseDir);
 
 $('back').addEventListener('click', goStart);
 
@@ -204,6 +217,185 @@ function validateSection() {
   }
   return { start: fmtDuration(start), end: fmtDuration(end) };
 }
+
+// ---------- Channel ----------
+// The channel list doesn't know which qualities a VOD offers, so these are steps:
+// if a VOD lacks the chosen one, yt-dlp takes the next lower one.
+const QUALITIES = [
+  { id: 'best', label: 'Best', format: 'best' },
+  { id: '1080', label: '1080p', format: 'best[height<=1080]/best' },
+  { id: '720', label: '720p', format: 'best[height<=720]/best' },
+  { id: '480', label: '480p', format: 'best[height<=480]/best' },
+  { id: 'audio', label: 'Audio only', format: 'ba/b', audio: true },
+];
+const ICON_CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+let channelVods = [];
+const picked = new Set();         // IDs of the selected VODs
+const pickedQuality = new Map();  // VOD ID -> quality ID, used when not "same for all"
+const cards = new Map();          // VOD ID -> { card, chip }
+
+function el(tag, className, text) {
+  const e = document.createElement(tag);
+  if (className) e.className = className;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function fillQualities(select, value) {
+  select.replaceChildren(...QUALITIES.map((q) => new Option(q.label, q.id)));
+  select.value = value;
+}
+
+function fmtShortDate(ts) {
+  return ts ? new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+}
+
+function fmtViews(n) {
+  if (n == null) return '';
+  return `${new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n)} views`;
+}
+
+const chipValue = (id) => pickedQuality.get(id) ?? $('ch-quality').value;
+
+function makeCard(v) {
+  const card = el('div', 'vod');
+  card.setAttribute('role', 'checkbox');
+  card.setAttribute('aria-checked', 'false');
+  card.tabIndex = 0;
+
+  const thumb = el('div', 'vod-thumb');
+  const img = el('img');
+  img.alt = '';
+  img.loading = 'lazy';
+  img.src = v.thumbnail;
+  const dur = el('span', 'badge', fmtDuration(v.duration));
+  dur.hidden = !v.duration;
+  const check = el('span', 'vod-check');
+  check.innerHTML = ICON_CHECK;
+  thumb.append(img, dur, check);
+
+  const text = el('div', 'vod-text');
+  const title = el('div', 'vod-title', v.title);
+  title.title = v.title;
+  const meta = el('div', 'vod-meta', [fmtShortDate(v.timestamp), fmtViews(v.views)].filter(Boolean).join(' · '));
+  const chip = el('select', 'vod-q');
+  chip.setAttribute('aria-label', 'Quality');
+  fillQualities(chip, chipValue(v.id));
+  // The quality menu must not toggle the card.
+  chip.addEventListener('click', (e) => e.stopPropagation());
+  chip.addEventListener('keydown', (e) => e.stopPropagation());
+  chip.addEventListener('change', () => pickedQuality.set(v.id, chip.value));
+  text.append(title, meta, chip);
+
+  card.append(thumb, text);
+  card.addEventListener('click', () => toggleVod(v.id));
+  card.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      toggleVod(v.id);
+    }
+  });
+  cards.set(v.id, { card, chip });
+  return card;
+}
+
+function toggleVod(id) {
+  const c = cards.get(id);
+  const on = !picked.has(id);
+  if (on) {
+    picked.add(id);
+    c.chip.value = chipValue(id);
+  } else {
+    picked.delete(id);
+  }
+  c.card.classList.toggle('sel', on);
+  c.card.setAttribute('aria-checked', String(on));
+  updateChannelUi();
+}
+
+function updateChannelUi() {
+  const n = picked.size;
+  $('ch-download').disabled = n === 0;
+  $('ch-download').textContent = n ? `Download ${n} selected` : 'Download';
+  $('ch-all').textContent = n === channelVods.length ? 'Clear' : 'Select all';
+  setError($('ch-error'), '');
+}
+
+function applyLayout(layout) {
+  $('ch-grid').dataset.layout = layout;
+  for (const l of ['grid', 'list']) {
+    $(`lay-${l}`).classList.toggle('on', l === layout);
+    $(`lay-${l}`).setAttribute('aria-pressed', String(l === layout));
+  }
+}
+for (const l of ['grid', 'list']) {
+  $(`lay-${l}`).addEventListener('click', () => {
+    localStorage.setItem('layout', l);
+    applyLayout(l);
+  });
+}
+
+function renderChannel(res) {
+  channelVods = res.vods;
+  picked.clear();
+  pickedQuality.clear();
+  cards.clear();
+  const view = $('view-channel');
+  view.classList.toggle('empty', !res.vods.length);
+  view.classList.remove('individual');
+  $('ch-same').checked = true;
+  fillQualities($('ch-quality'), 'best');
+  $('ch-name').textContent = res.channel;
+  $('ch-sub').textContent = `Last 14 days${res.vods.length ? ` · ${res.vods.length} ${res.vods.length === 1 ? 'VOD' : 'VODs'}` : ''}`;
+  $('ch-empty').hidden = res.vods.length > 0;
+  $('ch-grid').replaceChildren(...res.vods.map(makeCard));
+  $('ch-grid').parentElement.scrollTop = 0;
+  applyLayout(localStorage.getItem('layout') === 'list' ? 'list' : 'grid');
+  updateChannelUi();
+}
+
+$('ch-same').addEventListener('change', (e) => {
+  $('view-channel').classList.toggle('individual', !e.target.checked);
+  if (!e.target.checked) for (const [id, c] of cards) c.chip.value = chipValue(id);
+});
+
+$('ch-all').addEventListener('click', () => {
+  const all = picked.size !== channelVods.length;
+  for (const v of channelVods) if (picked.has(v.id) !== all) toggleVod(v.id);
+});
+
+$('ch-back').addEventListener('click', goStart);
+
+$('ch-download').addEventListener('click', () => {
+  const same = $('ch-same').checked;
+  let added = 0;
+  for (const v of channelVods) {
+    if (!picked.has(v.id)) continue;
+    const dup = queue.find((q) => q.vod.id === v.id && !q.start && !q.end && (q.status === 'queued' || q.status === 'active'));
+    if (dup) continue;
+    const quality = QUALITIES.find((q) => q.id === (same ? $('ch-quality').value : chipValue(v.id)));
+    queue.push({
+      key: nextKey++,
+      vod: v,
+      formatId: quality.format,
+      audio: !!quality.audio,
+      quality: quality.label,
+      start: null,
+      end: null,
+      status: 'queued',
+      pct: null,
+      stats: '',
+      filePath: null,
+      error: '',
+    });
+    added++;
+  }
+  if (!added) return setError($('ch-error'), 'The selected VODs are already in the queue.');
+  renderQueue();
+  show('queue');
+  processQueue();
+});
 
 // ---------- Add to the queue ----------
 $('download').addEventListener('click', () => {

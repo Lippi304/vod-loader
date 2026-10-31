@@ -88,7 +88,7 @@ ipcMain.handle('setup', async () => {
   return { ok: true };
 });
 
-ipcMain.handle('info', async (_e, input) => ytdlp.getInfo(input));
+ipcMain.handle('lookup', async (_e, input) => ytdlp.lookup(input));
 
 ipcMain.handle('get-dir', () => {
   const dir = downloadDir();

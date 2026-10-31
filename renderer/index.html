@@ -23,9 +23,9 @@
     <section id="view-start" class="view center">
       <div class="app-icon"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></div>
       <h1>VOD Loader</h1>
-      <p class="muted">Paste the link to a Twitch VOD.</p>
+      <p class="muted">Paste a Twitch VOD link or type a channel name.</p>
       <form id="url-form" class="field" autocomplete="off">
-        <input id="url" type="text" spellcheck="false" placeholder="twitch.tv/videos/…" />
+        <input id="url" type="text" spellcheck="false" placeholder="twitch.tv/videos/… or a channel" />
         <button type="submit" id="go" class="field-btn" aria-label="Continue">
           <svg viewBox="0 0 24 24"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
         </button>
@@ -74,6 +74,55 @@
       <div class="actions">
         <button id="download" class="btn primary">Download</button>
         <button id="back" class="btn plain">Another VOD</button>
+      </div>
+    </section>
+
+    <!-- Channel: recent VODs to pick from -->
+    <section id="view-channel" class="view">
+      <div class="ch-head">
+        <div class="ch-title">
+          <h2 id="ch-name"></h2>
+          <p id="ch-sub" class="muted small"></p>
+        </div>
+        <div class="ch-tools">
+          <div class="seg" role="group" aria-label="Layout">
+            <button type="button" id="lay-grid" class="seg-btn" aria-label="Grid" title="Grid">
+              <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>
+            </button>
+            <button type="button" id="lay-list" class="seg-btn" aria-label="List" title="List">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+          <button type="button" id="ch-all" class="link-btn">Select all</button>
+        </div>
+      </div>
+
+      <div class="ch-scroll">
+        <div id="ch-grid" class="ch-grid" data-layout="grid"></div>
+        <p id="ch-empty" class="muted ch-empty" hidden>No VODs from the last 14 days. Check the channel name, or the channel may not keep past broadcasts.</p>
+      </div>
+
+      <div class="group">
+        <label class="row">
+          <span>Quality</span>
+          <span id="ch-quality-wrap" class="select-wrap"><select id="ch-quality"></select></span>
+          <span class="ch-hint">Set on each VOD</span>
+        </label>
+        <label class="row">
+          <span>Same quality for all</span>
+          <input type="checkbox" id="ch-same" class="switch" checked />
+        </label>
+        <button type="button" class="row link-row" id="ch-dir-btn">
+          <span>Save to</span>
+          <span class="value"><span id="ch-dir-name">Downloads</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
+
+      <p id="ch-error" class="error" hidden></p>
+
+      <div class="actions">
+        <button id="ch-download" class="btn primary" disabled>Download</button>
+        <button id="ch-back" class="btn plain">Another VOD or channel</button>
       </div>
     </section>
 
