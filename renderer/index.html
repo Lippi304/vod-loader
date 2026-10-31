@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
@@ -11,11 +11,11 @@
   <div class="titlebar"></div>
 
   <main>
-    <!-- Einrichtung -->
+    <!-- Setup -->
     <section id="view-setup" class="view center">
       <div class="app-icon"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></div>
-      <h2>Einen Moment …</h2>
-      <p class="muted">VOD Loader wird zum ersten Mal eingerichtet.</p>
+      <h2>One moment …</h2>
+      <p class="muted">Setting up VOD Loader for the first time.</p>
       <div class="bar"><div class="bar-fill" id="setup-fill"></div></div>
     </section>
 
@@ -23,18 +23,18 @@
     <section id="view-start" class="view center">
       <div class="app-icon"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></div>
       <h1>VOD Loader</h1>
-      <p class="muted">Füge den Link zu einem Twitch-VOD ein.</p>
+      <p class="muted">Paste the link to a Twitch VOD.</p>
       <form id="url-form" class="field" autocomplete="off">
         <input id="url" type="text" spellcheck="false" placeholder="twitch.tv/videos/…" />
-        <button type="submit" id="go" class="field-btn" aria-label="Weiter">
+        <button type="submit" id="go" class="field-btn" aria-label="Continue">
           <svg viewBox="0 0 24 24"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
         </button>
       </form>
       <p id="start-error" class="error" hidden></p>
-      <button id="to-queue" class="btn plain" hidden>Downloads ansehen</button>
+      <button id="to-queue" class="btn plain" hidden>View downloads</button>
     </section>
 
-    <!-- VOD gefunden -->
+    <!-- VOD found -->
     <section id="view-info" class="view">
       <div class="card">
         <div class="thumb"><img id="thumb" alt="" /><span id="duration" class="badge"></span></div>
@@ -46,25 +46,25 @@
 
       <div class="group">
         <label class="row">
-          <span>Qualität</span>
+          <span>Quality</span>
           <span class="select-wrap"><select id="quality"></select></span>
         </label>
         <label class="row">
-          <span>Nur Ausschnitt</span>
+          <span>Section only</span>
           <input type="checkbox" id="section-toggle" class="switch" />
         </label>
         <div id="section-rows" class="collapse"><div>
           <label class="row">
-            <span>Von</span>
+            <span>From</span>
             <input id="start" class="time" type="text" placeholder="0:00:00" inputmode="numeric" />
           </label>
           <label class="row">
-            <span>Bis</span>
+            <span>To</span>
             <input id="end" class="time" type="text" placeholder="0:00:00" inputmode="numeric" />
           </label>
         </div></div>
         <button type="button" class="row link-row" id="dir-btn">
-          <span>Speichern in</span>
+          <span>Save to</span>
           <span class="value"><span id="dir-name">Downloads</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
         </button>
       </div>
@@ -72,12 +72,12 @@
       <p id="info-error" class="error" hidden></p>
 
       <div class="actions">
-        <button id="download" class="btn primary">Laden</button>
-        <button id="back" class="btn plain">Anderes VOD</button>
+        <button id="download" class="btn primary">Download</button>
+        <button id="back" class="btn plain">Another VOD</button>
       </div>
     </section>
 
-    <!-- Downloads / Warteschlange -->
+    <!-- Downloads / queue -->
     <section id="view-queue" class="view">
       <div class="queue-head">
         <h2 id="q-title">Downloads</h2>
@@ -85,8 +85,8 @@
       </div>
       <ul id="q-list" class="group q-list"></ul>
       <div class="actions">
-        <button id="q-add" class="btn primary">Weiteres VOD hinzufügen</button>
-        <button id="q-folder" class="btn plain">Im Finder zeigen</button>
+        <button id="q-add" class="btn primary">Add another VOD</button>
+        <button id="q-folder" class="btn plain">Show in Finder</button>
       </div>
     </section>
   </main>

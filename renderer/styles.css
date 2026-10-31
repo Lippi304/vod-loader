@@ -30,7 +30,7 @@
   }
 }
 
-/* Auf dem Mac scheint die Fenster-Vibrancy leicht durch. */
+/* On the Mac the window vibrancy shows through slightly. */
 html[data-platform='darwin'] {
   --bg: rgba(245, 245, 247, 0.72);
 }
@@ -118,7 +118,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
 .view.center h1 + .muted { margin-top: -10px; }
 .view.center h2 + .muted { margin-top: -10px; }
 
-/* App-Icon */
+/* App icon */
 .app-icon {
   width: 72px;
   height: 72px;
@@ -139,7 +139,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
   stroke-linejoin: round;
 }
 
-/* Eingabefeld */
+/* Input field */
 .field {
   width: 100%;
   position: relative;
@@ -207,7 +207,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
   font-size: 13px;
 }
 
-/* Karte */
+/* Card */
 .card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -251,7 +251,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
   overflow: hidden;
 }
 
-/* Gruppierte Liste (wie in den Systemeinstellungen) */
+/* Grouped list (like in System Settings) */
 .group {
   background: var(--surface);
   border-radius: var(--radius);
@@ -350,7 +350,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
 }
 .select-wrap select option { color: initial; }
 
-/* Zeitfelder */
+/* Time fields */
 .time {
   width: 96px;
   text-align: right;
@@ -367,7 +367,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
 .time:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
 .time.invalid { box-shadow: 0 0 0 2px var(--red); }
 
-/* Schalter */
+/* Switch */
 .switch {
   appearance: none;
   -webkit-appearance: none;
@@ -429,7 +429,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
 }
 .btn.plain:hover { opacity: 0.75; }
 
-/* Fortschritt */
+/* Progress */
 .bar {
   width: 100%;
   height: 6px;
@@ -465,7 +465,7 @@ h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
   margin-bottom: 6px;
 }
 
-/* Häkchen */
+/* Checkmark */
 .check svg {
   width: 72px;
   height: 72px;
@@ -493,7 +493,7 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-/* ---------- Warteschlange ---------- */
+/* ---------- Queue ---------- */
 .queue-head {
   display: flex;
   flex-direction: column;

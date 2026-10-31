@@ -5,9 +5,9 @@ const ytdlp = require('./lib/ytdlp');
 
 const isMac = process.platform === 'darwin';
 let win = null;
-let current = null; // laufender Download
+let current = null; // running download
 
-// ---------- Einstellungen ----------
+// ---------- Settings ----------
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 function loadSettings() {
   try {
@@ -29,7 +29,7 @@ function downloadDir() {
   return d && fs.existsSync(d) ? d : app.getPath('downloads');
 }
 
-// ---------- Fenster ----------
+// ---------- Window ----------
 function createWindow() {
   win = new BrowserWindow({
     width: 520,
@@ -54,23 +54,23 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => win.show());
 
-  // Externe Links im Browser öffnen, nie im App-Fenster.
+  // Open external links in the browser, never in the app window.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https:\/\//.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
   win.webContents.on('will-navigate', (e) => e.preventDefault());
 
-  // Nicht versehentlich mitten im Download schließen.
+  // Don't close by accident in the middle of a download.
   win.on('close', (e) => {
     if (!current) return;
     const choice = dialog.showMessageBoxSync(win, {
       type: 'warning',
-      buttons: ['Weiterladen', 'Abbrechen und schließen'],
+      buttons: ['Keep downloading', 'Cancel and close'],
       defaultId: 0,
       cancelId: 0,
-      message: 'Es läuft noch ein Download.',
-      detail: 'Wenn du das Fenster schließt, werden der laufende Download und die Warteschlange abgebrochen.',
+      message: 'A download is still running.',
+      detail: 'If you close the window, the running download and the queue will be cancelled.',
     });
     if (choice === 0) e.preventDefault();
     else current.cancel();
@@ -84,7 +84,7 @@ const send = (channel, payload) => {
 // ---------- IPC ----------
 ipcMain.handle('setup', async () => {
   const res = await ytdlp.ensure((p) => send('setup-progress', p));
-  if (!res.installed) ytdlp.selfUpdate(); // im Hintergrund aktuell halten
+  if (!res.installed) ytdlp.selfUpdate(); // keep it up to date in the background
   return { ok: true };
 });
 
@@ -97,7 +97,7 @@ ipcMain.handle('get-dir', () => {
 
 ipcMain.handle('choose-dir', async () => {
   const r = await dialog.showOpenDialog(win, {
-    title: 'Speicherort wählen',
+    title: 'Choose download folder',
     defaultPath: downloadDir(),
     properties: ['openDirectory', 'createDirectory'],
   });
@@ -107,10 +107,10 @@ ipcMain.handle('choose-dir', async () => {
 });
 
 ipcMain.handle('download', async (_e, opts) => {
-  if (current) throw new Error('Es läuft bereits ein Download.');
+  if (current) throw new Error('A download is already running.');
   const job = ytdlp.download({ ...opts, dir: downloadDir() }, (p) => {
     send('progress', p);
-    // Fortschritt im Dock (Mac) bzw. in der Taskleiste (Windows)
+    // Progress in the Dock (Mac) or the taskbar (Windows)
     if (win && !win.isDestroyed()) win.setProgressBar(p.pct == null ? 2 : p.pct);
   });
   current = job;
@@ -135,9 +135,9 @@ ipcMain.handle('reveal', (_e, filePath) => {
   else shell.openPath(downloadDir());
 });
 
-// ---------- Lebenszyklus ----------
+// ---------- Lifecycle ----------
 app.whenReady().then(() => {
-  // Auf dem Mac das Standardmenü behalten (sonst funktioniert ⌘V nicht).
+  // Keep the default menu on the Mac (otherwise ⌘V does not work).
   if (!isMac) Menu.setApplicationMenu(null);
   createWindow();
   app.on('activate', () => {

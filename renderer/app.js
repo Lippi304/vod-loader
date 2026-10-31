@@ -6,17 +6,17 @@ const $ = (id) => document.getElementById(id);
 
 document.documentElement.dataset.platform = api.platform;
 const isMac = api.platform === 'darwin';
-$('q-folder').textContent = isMac ? 'Im Finder zeigen' : 'Im Explorer zeigen';
+$('q-folder').textContent = isMac ? 'Show in Finder' : 'Show in Explorer';
 
-let vod = null;          // aktuell angezeigtes VOD (Info-Ansicht)
-const queue = [];        // alle Downloads dieser Sitzung
+let vod = null;          // VOD currently shown (info view)
+const queue = [];        // all downloads of this session
 let running = false;
 let nextKey = 1;
 
 const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const ICON_REVEAL = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>';
 
-// ---------- Hilfsfunktionen ----------
+// ---------- Helpers ----------
 function show(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
 }
@@ -42,21 +42,21 @@ function fmtDuration(sec) {
 
 function fmtDate(ts) {
   if (!ts) return '';
-  return new Date(ts * 1000).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(ts * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function fmtSpeed(bps) {
   if (!bps) return '';
   const mb = bps / 1024 / 1024;
-  return mb >= 1 ? `${mb.toFixed(1).replace('.', ',')} MB/s` : `${Math.round(bps / 1024)} KB/s`;
+  return mb >= 1 ? `${mb.toFixed(1)} MB/s` : `${Math.round(bps / 1024)} KB/s`;
 }
 
 function fmtEta(sec) {
   if (sec == null || !Number.isFinite(sec)) return '';
-  if (sec < 60) return 'noch wenige Sek.';
+  if (sec < 60) return 'a few seconds left';
   const min = Math.round(sec / 60);
-  if (min < 60) return `noch ${min} Min.`;
-  return `noch ${Math.floor(min / 60)} Std. ${min % 60} Min.`;
+  if (min < 60) return `${min} min left`;
+  return `${Math.floor(min / 60)} h ${min % 60} min left`;
 }
 
 function toSeconds(str) {
@@ -89,8 +89,8 @@ async function init() {
     $('dir-name').textContent = d.name;
     goStart();
   } catch (err) {
-    $('view-setup').querySelector('h2').textContent = 'Einrichtung fehlgeschlagen';
-    $('view-setup').querySelector('p').textContent = cleanError(err) + ' Prüfe deine Internetverbindung und starte die App neu.';
+    $('view-setup').querySelector('h2').textContent = 'Setup failed';
+    $('view-setup').querySelector('p').textContent = cleanError(err) + ' Check your internet connection and restart the app.';
     fill.parentElement.hidden = true;
   }
 }
@@ -99,14 +99,14 @@ function updateStartLink() {
   const open = queue.filter((q) => q.status === 'queued' || q.status === 'active').length;
   const btn = $('to-queue');
   btn.hidden = queue.length === 0;
-  btn.textContent = open ? `Downloads ansehen (${open} offen)` : 'Downloads ansehen';
+  btn.textContent = open ? `View downloads (${open} open)` : 'View downloads';
 }
 $('to-queue').addEventListener('click', () => {
   renderQueue();
   show('queue');
 });
 
-// ---------- Link prüfen ----------
+// ---------- Check link ----------
 const form = $('url-form');
 let busy = false;
 
@@ -153,7 +153,7 @@ function renderInfo() {
   if (!vod.qualities.length) {
     const o = document.createElement('option');
     o.value = 'best';
-    o.textContent = 'Beste';
+    o.textContent = 'Best';
     sel.appendChild(o);
   }
 
@@ -163,11 +163,11 @@ function renderInfo() {
   $('end').value = '';
   $('end').placeholder = fmtDuration(vod.duration) || '0:00:00';
   setError($('info-error'), '');
-  $('download').textContent = running ? 'Zur Warteschlange hinzufügen' : 'Laden';
-  $('back').textContent = queue.length ? 'Abbrechen' : 'Anderes VOD';
+  $('download').textContent = running ? 'Add to queue' : 'Download';
+  $('back').textContent = queue.length ? 'Cancel' : 'Another VOD';
 }
 
-// ---------- Optionen ----------
+// ---------- Options ----------
 $('section-toggle').addEventListener('change', (e) => {
   $('section-rows').classList.toggle('open', e.target.checked);
   if (e.target.checked) setTimeout(() => $('start').focus(), 150);
@@ -191,21 +191,21 @@ function validateSection() {
   let ok = true;
   if (Number.isNaN(s)) { $('start').classList.add('invalid'); ok = false; }
   if (Number.isNaN(e)) { $('end').classList.add('invalid'); ok = false; }
-  if (!ok) return { error: 'Bitte Zeiten im Format h:mm:ss angeben, z. B. 1:05:00.' };
-  if (s == null && e == null) return { error: 'Gib mindestens eine Start- oder Endzeit an.' };
+  if (!ok) return { error: 'Please enter times as h:mm:ss, e.g. 1:05:00.' };
+  if (s == null && e == null) return { error: 'Enter at least a start or an end time.' };
   const start = s ?? 0;
   const end = e ?? vod.duration;
   if (vod.duration && (start >= vod.duration || end > vod.duration + 1)) {
-    return { error: `Das VOD ist nur ${fmtDuration(vod.duration)} lang.` };
+    return { error: `This VOD is only ${fmtDuration(vod.duration)} long.` };
   }
   if (end <= start) {
     $('end').classList.add('invalid');
-    return { error: 'Das Ende muss nach dem Start liegen.' };
+    return { error: 'The end must be after the start.' };
   }
   return { start: fmtDuration(start), end: fmtDuration(end) };
 }
 
-// ---------- In die Warteschlange ----------
+// ---------- Add to the queue ----------
 $('download').addEventListener('click', () => {
   setError($('info-error'), '');
   const sec = validateSection();
@@ -216,7 +216,7 @@ $('download').addEventListener('click', () => {
     (q) => q.vod.id === vod.id && q.start === sec.start && q.end === sec.end &&
       (q.status === 'queued' || q.status === 'active')
   );
-  if (dup) return setError($('info-error'), 'Dieses VOD ist schon in der Warteschlange.');
+  if (dup) return setError($('info-error'), 'This VOD is already in the queue.');
 
   queue.push({
     key: nextKey++,
@@ -246,7 +246,7 @@ async function processQueue() {
   }
   running = true;
   item.status = 'active';
-  item.stats = 'Wird vorbereitet …';
+  item.stats = 'Preparing …';
   renderQueue();
   try {
     const res = await api.download({
@@ -276,25 +276,25 @@ api.onProgress((p) => {
   if (!item) return;
   if (p.pct == null) {
     item.pct = null;
-    item.stats = 'Wird geladen …';
+    item.stats = 'Downloading …';
   } else {
     item.pct = Math.max(0, Math.min(1, p.pct));
     const pct = item.pct * 100;
     item.stats = pct >= 99.5
-      ? 'Wird fertiggestellt …'
-      : [`${Math.floor(pct)} %`, fmtSpeed(p.speed), fmtEta(p.eta)].filter(Boolean).join(' · ');
+      ? 'Finishing …'
+      : [`${Math.floor(pct)}%`, fmtSpeed(p.speed), fmtEta(p.eta)].filter(Boolean).join(' · ');
   }
   updateActiveRow(item);
 });
 
-// ---------- Liste anzeigen ----------
+// ---------- Show the list ----------
 function statusText(q) {
   switch (q.status) {
-    case 'queued': return `Wartet · ${q.quality}${q.start ? ` · ${q.start}–${q.end}` : ''}`;
+    case 'queued': return `Waiting · ${q.quality}${q.start ? ` · ${q.start}–${q.end}` : ''}`;
     case 'active': return q.stats;
-    case 'done': return 'Fertig';
-    case 'cancelled': return 'Abgebrochen';
-    case 'error': return q.error || 'Fehler';
+    case 'done': return 'Done';
+    case 'cancelled': return 'Cancelled';
+    case 'error': return q.error || 'Error';
     default: return '';
   }
 }
@@ -333,19 +333,19 @@ function renderQueue() {
     btn.className = 'q-btn';
     if (q.status === 'done') {
       btn.innerHTML = ICON_REVEAL;
-      btn.title = isMac ? 'Im Finder zeigen' : 'Im Explorer zeigen';
+      btn.title = isMac ? 'Show in Finder' : 'Show in Explorer';
       btn.onclick = () => api.reveal(q.filePath);
     } else if (q.status === 'active') {
       btn.innerHTML = ICON_X;
-      btn.title = 'Abbrechen';
+      btn.title = 'Cancel';
       btn.onclick = () => {
-        q.stats = 'Wird abgebrochen …';
+        q.stats = 'Cancelling …';
         updateActiveRow(q);
         api.cancel();
       };
     } else {
       btn.innerHTML = ICON_X;
-      btn.title = 'Entfernen';
+      btn.title = 'Remove';
       btn.onclick = () => {
         queue.splice(queue.indexOf(q), 1);
         if (!queue.length) return goStart();
@@ -376,10 +376,10 @@ function renderHeader() {
   const failed = queue.filter((q) => q.status === 'error').length;
   if (open) {
     $('q-title').textContent = 'Downloads';
-    $('q-sub').textContent = `${done} von ${total} fertig${open > 1 ? ` · ${open - 1} in der Warteschlange` : ''}`;
+    $('q-sub').textContent = `${done} of ${total} done${open > 1 ? ` · ${open - 1} in queue` : ''}`;
   } else {
-    $('q-title').textContent = 'Fertig';
-    $('q-sub').textContent = `${done} von ${total} fertig${failed ? ` · ${failed} fehlgeschlagen` : ''}`;
+    $('q-title').textContent = 'Done';
+    $('q-sub').textContent = `${done} of ${total} done${failed ? ` · ${failed} failed` : ''}`;
   }
   updateStartLink();
 }
