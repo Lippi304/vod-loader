@@ -32,7 +32,7 @@ jobs:
         env:
           # Zertifikat und Apple-Zugang gibt es nur auf dem Mac; Windows bekommt sie nie zu sehen.
           # Mit Developer-ID-Zertifikat + APPLE_* notarisiert electron-builder automatisch.
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ runner.os != 'macOS' }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ runner.os == 'macOS' }}
           CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERT_P12 || '' }}
           CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CERT_PASSWORD || '' }}
           APPLE_ID: ${{ runner.os == 'macOS' && secrets.APPLE_ID || '' }}
