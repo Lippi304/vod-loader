@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const ytdlp = require('./lib/ytdlp');
+const installer = require('./lib/installer');
 
 const isMac = process.platform === 'darwin';
 const UPDATE_CHECK_MS = 4 * 60 * 60 * 1000;
@@ -159,12 +160,70 @@ function setupUpdates() {
 
 ipcMain.handle('install-update', () => autoUpdater.quitAndInstall());
 
+// ---------- Install from the disk image ----------
+// Started straight from the mounted DMG (double-click instead of drag): offer to move the app to
+// Applications. The relaunched copy then ejects the disk image and moves the .dmg to the Trash.
+const cleanupFile = () => path.join(app.getPath('userData'), 'installer-cleanup.json');
+
+// Returns true when the app is moving, i.e. it is about to quit and relaunch from Applications.
+function offerMoveToApplications() {
+  const volume = isMac && app.isPackaged && !app.isInApplicationsFolder() ? installer.volumeOf(app.getPath('exe')) : null;
+  if (!volume) return false;
+  let dmg = null;
+  try {
+    dmg = installer.dmgForVolume(installer.mountedImages(), volume);
+  } catch (_) {}
+  const cleanUp = !!dmg && installer.isOurInstaller(dmg);
+  const choice = dialog.showMessageBoxSync({
+    type: 'question',
+    buttons: ['Move to Applications', 'Not Now'],
+    defaultId: 0,
+    cancelId: 1,
+    message: 'Move VOD Loader to the Applications folder?',
+    detail: cleanUp ? 'The installer will be ejected and moved to the Trash.' : undefined,
+  });
+  if (choice !== 0) return false;
+  try {
+    if (cleanUp) {
+      fs.mkdirSync(path.dirname(cleanupFile()), { recursive: true });
+      fs.writeFileSync(cleanupFile(), JSON.stringify({ volume, dmg, at: Date.now() }));
+    }
+    if (app.moveToApplicationsFolder()) return true;
+  } catch (err) {
+    dialog.showErrorBox('Could not move the app', err.message);
+  }
+  fs.rmSync(cleanupFile(), { force: true });
+  return false;
+}
+
+// In the relaunched copy: eject the disk image and move the .dmg to the Trash.
+async function finishInstall() {
+  let job;
+  try {
+    job = JSON.parse(fs.readFileSync(cleanupFile(), 'utf8'));
+  } catch (_) {
+    return;
+  }
+  fs.rmSync(cleanupFile(), { force: true });
+  const fresh = Date.now() - job.at < 60 * 60 * 1000;
+  if (!fresh || !app.isInApplicationsFolder() || !installer.volumeOf(`${job.volume}/`) || !installer.isOurInstaller(job.dmg)) return;
+  // The old copy may still be shutting down, so the volume can be busy for a moment.
+  let ejected = false;
+  for (let i = 0; i < 10 && !ejected; i++) {
+    ejected = await installer.eject(job.volume);
+    if (!ejected) await new Promise((r) => setTimeout(r, 1000));
+  }
+  if (ejected && fs.existsSync(job.dmg)) await shell.trashItem(job.dmg).catch(() => {});
+}
+
 // ---------- Lifecycle ----------
 app.whenReady().then(() => {
+  if (offerMoveToApplications()) return; // quits and relaunches from Applications
   // Keep the default menu on the Mac (otherwise ⌘V does not work).
   if (!isMac) Menu.setApplicationMenu(null);
   createWindow();
   setupUpdates();
+  finishInstall();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
