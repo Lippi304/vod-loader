@@ -1,7 +1,7 @@
 {
   "name": "vod-loader",
   "productName": "VOD Loader",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Download Twitch VODs. Simple.",
   "author": "Lippi304",
   "license": "MIT",
