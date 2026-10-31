@@ -207,13 +207,14 @@ async function finishInstall() {
   fs.rmSync(cleanupFile(), { force: true });
   const fresh = Date.now() - job.at < 60 * 60 * 1000;
   if (!fresh || !app.isInApplicationsFolder() || !installer.volumeOf(`${job.volume}/`) || !installer.isOurInstaller(job.dmg)) return;
-  // The old copy may still be shutting down, so the volume can be busy for a moment.
-  let ejected = false;
-  for (let i = 0; i < 10 && !ejected; i++) {
-    ejected = await installer.eject(job.volume);
-    if (!ejected) await new Promise((r) => setTimeout(r, 1000));
+  // The old copy may still be shutting down, so the volume can be busy for a moment. Electron's
+  // own move ejects it too, so a volume that is already gone counts as ejected.
+  let gone = !fs.existsSync(job.volume);
+  for (let i = 0; i < 10 && !gone; i++) {
+    gone = (await installer.eject(job.volume)) || !fs.existsSync(job.volume);
+    if (!gone) await new Promise((r) => setTimeout(r, 1000));
   }
-  if (ejected && fs.existsSync(job.dmg)) await shell.trashItem(job.dmg).catch(() => {});
+  if (gone && fs.existsSync(job.dmg)) await shell.trashItem(job.dmg).catch(() => {});
 }
 
 // ---------- Lifecycle ----------
