@@ -45,12 +45,10 @@ Nach ca. 10 Minuten liegen DMG und EXE rechts im Repo unter **Releases** zum Dow
 
 ## Erster Start: Sicherheitswarnung
 
-Die App ist nicht bei Apple bzw. Microsoft signiert (das kostet Geld). Deshalb:
-
-- **Mac:** App in *Programme* ziehen. Wenn macOS sie blockiert: *Systemeinstellungen →
-  Datenschutz & Sicherheit → „Dennoch öffnen“*. Falls „beschädigt“ angezeigt wird, einmal im Terminal:
-  `xattr -dr com.apple.quarantine "/Applications/VOD Loader.app"`
-- **Windows:** Bei SmartScreen auf *Weitere Informationen → Trotzdem ausführen* klicken.
+- **Mac:** Die App ist signiert und von Apple notarisiert. DMG öffnen, App in *Programme* ziehen und
+  starten. Beim ersten Start fragt macOS einmalig, ob die aus dem Internet geladene App geöffnet werden soll: *Öffnen*.
+- **Windows:** Die App ist nicht signiert (das kostet Geld). Bei SmartScreen auf
+  *Weitere Informationen → Trotzdem ausführen* klicken.
 
 ## Grenzen
 

@@ -42,9 +42,7 @@
         }
       ],
       "category": "public.app-category.utilities",
-      "icon": "build/icon.png",
-      "identity": "-",
-      "hardenedRuntime": false
+      "icon": "build/icon.png"
     },
     "dmg": {
       "title": "VOD Loader"
