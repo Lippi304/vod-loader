@@ -188,7 +188,18 @@ function offerMoveToApplications() {
       fs.mkdirSync(path.dirname(cleanupFile()), { recursive: true });
       fs.writeFileSync(cleanupFile(), JSON.stringify({ volume, dmg, at: Date.now() }));
     }
-    if (app.moveToApplicationsFolder()) return true;
+    // An installed copy that isn't running is replaced (Electron trashes it). A running one can't be:
+    // Electron would only focus it and quit this copy, leaving the disk image behind.
+    const conflictHandler = (type) => {
+      if (type === 'exists') return true;
+      dialog.showMessageBoxSync({
+        type: 'info',
+        message: 'VOD Loader is already installed and running.',
+        detail: 'Quit it first, then open the installer again.',
+      });
+      return false;
+    };
+    if (app.moveToApplicationsFolder({ conflictHandler })) return true;
   } catch (err) {
     dialog.showErrorBox('Could not move the app', err.message);
   }
