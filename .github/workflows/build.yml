@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       fail-fast: false
-      # nacheinander, damit beide Jobs in dasselbe Release schreiben
+      # one after another, so both jobs write to the same release
       max-parallel: 1
       matrix:
         include:
@@ -30,23 +30,23 @@ jobs:
       - run: npm ci
       - run: npm run dist
         env:
-          # Zertifikat und Apple-Zugang gibt es nur auf dem Mac; Windows bekommt sie nie zu sehen.
-          # Mit Developer-ID-Zertifikat + APPLE_* notarisiert electron-builder automatisch.
+          # The certificate and Apple credentials only exist on the Mac; Windows never sees them.
+          # With a Developer ID certificate + APPLE_*, electron-builder notarizes automatically.
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ runner.os == 'macOS' }}
           CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERT_P12 || '' }}
           CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CERT_PASSWORD || '' }}
           APPLE_ID: ${{ runner.os == 'macOS' && secrets.APPLE_ID || '' }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ runner.os == 'macOS' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
           APPLE_TEAM_ID: R7AGU84UX7
-      # Ohne Secrets baut electron-builder still eine unsignierte App: hier lieber laut scheitern.
-      - name: Signatur und Notarisierung prüfen
+      # Without secrets electron-builder silently builds an unsigned app: fail loudly instead.
+      - name: Verify signature and notarization
         if: runner.os == 'macOS'
         run: |
           app=$(ls -d dist/mac*/*.app)
           codesign --verify --deep --strict --verbose=2 "$app"
           xcrun stapler validate "$app"
           spctl --assess --type execute --verbose=2 "$app"
-      # Releases zählen nicht zum Artifact-Speicherkontingent
+      # Releases don't count towards the artifact storage quota
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}

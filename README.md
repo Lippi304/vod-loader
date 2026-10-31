@@ -1,61 +1,61 @@
 # VOD Loader
 
-Twitch-VODs laden. Einfach. Link einfügen, Qualität wählen, fertig.
+Download Twitch VODs. Simple. Paste a link, pick a quality, done.
 
-Läuft auf **macOS (Apple Silicon)** und **Windows**. Unter der Haube arbeiten
-[yt-dlp](https://github.com/yt-dlp/yt-dlp) (lädt das VOD) und ffmpeg (setzt es zur MP4 zusammen).
+Runs on **macOS (Apple Silicon)** and **Windows**. Under the hood,
+[yt-dlp](https://github.com/yt-dlp/yt-dlp) downloads the VOD and ffmpeg remuxes it into an MP4.
 
-## Funktionen
+## Features
 
-- Link einfügen → Vorschaubild, Titel, Kanal, Länge
-- Qualität wählen (z. B. 1080p60, 720p60 … oder nur Audio)
-- Optional nur einen Ausschnitt laden (Von / Bis)
-- Warteschlange: mehrere VODs hinzufügen, sie werden nacheinander geladen
-- Speicherort wählen (wird gemerkt, Standard: Downloads)
-- Fortschritt mit Geschwindigkeit und Restzeit, auch im Dock bzw. in der Taskleiste; Abbrechen jederzeit möglich
-- Hell- und Dunkelmodus automatisch nach System
+- Paste a link → thumbnail, title, channel, duration
+- Pick a quality (e.g. 1080p60, 720p60 … or audio only)
+- Optionally download just a section (from / to)
+- Queue: add several VODs, they are downloaded one after another
+- Choose where to save (remembered, default: Downloads)
+- Progress with speed and time remaining, also shown in the Dock / taskbar; cancel at any time
+- Light and dark mode, following the system automatically
 
-## Direkt starten (ohne Installation)
+## Run directly (no installation)
 
-Voraussetzung: [Node.js](https://nodejs.org) 20 oder neuer.
+Requires [Node.js](https://nodejs.org) 20 or newer.
 
 ```bash
 npm install
 npm start
 ```
 
-Beim ersten Start lädt die App yt-dlp einmalig herunter (ca. 35 MB) und hält es danach
-selbstständig aktuell.
+On first launch the app downloads yt-dlp once (about 35 MB) and keeps it up to date on its own.
 
-## Installierbare App bauen
+## Build an installable app
 
-**Variante A, lokal:** auf dem jeweiligen System
+**Option A, locally:** on the respective system
 
 ```bash
 npm install
 npm run dist
 ```
 
-Das Ergebnis liegt in `dist/` (`.dmg` auf dem Mac, `.exe` unter Windows).
-Mac-Builds gehen nur auf einem Mac, Windows-Builds nur unter Windows.
+The result is in `dist/` (`.dmg` on macOS, `.exe` on Windows).
+Mac builds only work on a Mac, Windows builds only on Windows.
 
-**Variante B, über GitHub (beide auf einmal):**
-Jeder Push auf `main` startet automatisch einen Build (manuell: **Actions → Build → Run workflow**).
-Nach ca. 10 Minuten liegen DMG und EXE rechts im Repo unter **Releases** zum Download.
+**Option B, via GitHub (both at once):**
+Every push to `main` automatically starts a build (manually: **Actions → Build → Run workflow**).
+After about 10 minutes the DMG and EXE are available under **Releases** on the right side of the repo.
 
-## Erster Start: Sicherheitswarnung
+## First launch: security warning
 
-- **Mac:** Die App ist signiert und von Apple notarisiert. DMG öffnen, App in *Programme* ziehen und
-  starten. Beim ersten Start fragt macOS einmalig, ob die aus dem Internet geladene App geöffnet werden soll: *Öffnen*.
-- **Windows:** Die App ist nicht signiert (das kostet Geld). Bei SmartScreen auf
-  *Weitere Informationen → Trotzdem ausführen* klicken.
+- **Mac:** The app is signed and notarized by Apple. Open the DMG, drag the app into *Applications*
+  and launch it. On first launch macOS asks once whether you want to open an app downloaded from
+  the internet: click *Open*.
+- **Windows:** The app is not signed (that costs money). If SmartScreen appears, click
+  *More info → Run anyway*.
 
-## Grenzen
+## Limitations
 
-- VODs nur für Abonnenten werden nicht unterstützt (dafür wäre ein Twitch-Login nötig).
-- Nur VODs, keine Clips und kein Chat. Das ist so gewollt.
-- Mac-Build nur für Apple Silicon (M1 und neuer).
+- Subscriber-only VODs are not supported (that would require a Twitch login).
+- VODs only, no clips and no chat. That is intentional.
+- The Mac build is for Apple Silicon only (M1 and newer).
 
-## Lizenz
+## License
 
 MIT
