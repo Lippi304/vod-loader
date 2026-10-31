@@ -1,9 +1,11 @@
 name: Build
 
+# Pushing a version tag (e.g. v1.2.0) builds and publishes a release; the tag has to match
+# the version in package.json. "Run workflow" only builds and verifies, without a release.
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: write
@@ -17,9 +19,16 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            files: dist/*.dmg
+            files: |
+              dist/*.dmg
+              dist/*.zip
+              dist/*.blockmap
+              dist/latest-mac.yml
           - os: windows-latest
-            files: dist/*.exe
+            files: |
+              dist/*.exe
+              dist/*.blockmap
+              dist/latest.yml
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +36,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Check that the tag matches the version in package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
       - run: npm ci
       - run: npm run dist
         env:
@@ -46,12 +59,21 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app"
           xcrun stapler validate "$app"
           spctl --assess --type execute --verbose=2 "$app"
+      # The apps find updates through latest*.yml. GitHub renames asset names with spaces,
+      # which would leave these files pointing at files that don't exist.
+      - name: Check that the update files point at existing files
+        shell: bash
+        run: |
+          for f in dist/latest*.yml; do
+            for u in $(sed -n -E 's/^ *(- )?url: *//p' "$f"); do
+              test -f "dist/$u" || { echo "$f points to a missing file: $u"; exit 1; }
+            done
+          done
       # Releases don't count towards the artifact storage quota
       - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: VOD Loader 1.0.${{ github.run_number }}
-          target_commitish: ${{ github.sha }}
+          name: VOD Loader ${{ github.ref_name }}
           make_latest: true
           files: ${{ matrix.files }}
           fail_on_unmatched_files: true

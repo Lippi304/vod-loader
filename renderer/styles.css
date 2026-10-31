@@ -73,7 +73,7 @@ main {
   height: calc(100% - 0px);
   display: grid;
   place-items: center;
-  padding: 24px 32px 32px;
+  padding: 24px 32px calc(32px + var(--bar, 0px));
   overflow-y: auto;
 }
 html[data-platform='darwin'] main {
@@ -590,9 +590,9 @@ select:focus-visible {
 /* A fixed height (window minus main's padding and the Mac titlebar), so only the list scrolls. */
 #view-channel {
   max-width: 456px;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 56px - var(--bar, 0px));
 }
-html[data-platform='darwin'] #view-channel { height: calc(100vh - 76px); }
+html[data-platform='darwin'] #view-channel { height: calc(100vh - 76px - var(--bar, 0px)); }
 #view-channel.empty,
 html[data-platform='darwin'] #view-channel.empty { height: auto; }
 .ch-head {
@@ -765,3 +765,44 @@ html[data-platform='darwin'] #view-channel.empty { height: auto; }
 #view-channel.empty .ch-tools,
 #view-channel.empty .group,
 #view-channel.empty #ch-download { display: none; }
+
+/* ---------- Update notice ---------- */
+/* While it is shown, --bar reserves its space at the bottom of the window. */
+html.has-update { --bar: 56px; }
+.update-bar {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 7px 0 16px;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 10;
+  animation: in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.update-bar[hidden] { display: none; }
+.update-bar span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.update-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+.update-btn:hover { background: var(--accent-hover); }

@@ -1,11 +1,14 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 const ytdlp = require('./lib/ytdlp');
 
 const isMac = process.platform === 'darwin';
+const UPDATE_CHECK_MS = 4 * 60 * 60 * 1000;
 let win = null;
 let current = null; // running download
+let updateReady = null; // { version } once an update has been downloaded
 
 // ---------- Settings ----------
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -53,6 +56,10 @@ function createWindow() {
   });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => win.show());
+  // A window opened after the update was downloaded (Mac) still shows the notice.
+  win.webContents.on('did-finish-load', () => {
+    if (updateReady) send('update-ready', updateReady);
+  });
 
   // Open external links in the browser, never in the app window.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -135,11 +142,29 @@ ipcMain.handle('reveal', (_e, filePath) => {
   else shell.openPath(downloadDir());
 });
 
+// ---------- Updates ----------
+// Checks GitHub Releases in the background and downloads a newer version by itself.
+// It is installed on the next quit, or right away when the user clicks "Restart".
+function setupUpdates() {
+  if (!app.isPackaged) return; // not when started with `npm start`
+  autoUpdater.on('update-downloaded', (info) => {
+    updateReady = { version: info.version };
+    send('update-ready', updateReady);
+  });
+  autoUpdater.on('error', () => {}); // offline, rate limit, …: try again at the next check
+  const check = () => autoUpdater.checkForUpdates().catch(() => {});
+  check();
+  setInterval(check, UPDATE_CHECK_MS);
+}
+
+ipcMain.handle('install-update', () => autoUpdater.quitAndInstall());
+
 // ---------- Lifecycle ----------
 app.whenReady().then(() => {
   // Keep the default menu on the Mac (otherwise ⌘V does not work).
   if (!isMac) Menu.setApplicationMenu(null);
   createWindow();
+  setupUpdates();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

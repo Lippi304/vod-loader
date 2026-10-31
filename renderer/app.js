@@ -74,6 +74,18 @@ function goStart() {
   $('url').focus();
 }
 
+// ---------- Updates ----------
+api.onUpdateReady(({ version }) => {
+  $('update-text').textContent = `Version ${version} is ready`;
+  $('update-bar').hidden = false;
+  document.documentElement.classList.add('has-update');
+});
+$('update-later').addEventListener('click', () => {
+  $('update-bar').hidden = true;
+  document.documentElement.classList.remove('has-update');
+});
+$('update-restart').addEventListener('click', () => api.installUpdate());
+
 // ---------- Start ----------
 async function init() {
   show('setup');
