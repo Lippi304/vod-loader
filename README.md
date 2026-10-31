@@ -50,7 +50,9 @@ on the right side of the repo.
 
 - **Mac:** The app is signed and notarized by Apple. Open the DMG, drag the app into *Applications*
   and launch it. On first launch macOS asks once whether you want to open an app downloaded from
-  the internet: click *Open*.
+  the internet: click *Open*. Instead of dragging, you can also double-click the app inside the DMG:
+  it offers to move itself to *Applications*, then ejects the DMG and moves the downloaded `.dmg`
+  file to the Trash.
 - **Windows:** The app is not signed (that costs money). If SmartScreen appears, click
   *More info → Run anyway*.
 
