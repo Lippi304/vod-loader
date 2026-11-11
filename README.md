@@ -1,13 +1,18 @@
 # VOD Loader
 
-Download Twitch VODs. Simple. Paste a link, pick a quality, done.
+Download Twitch VODs and YouTube clips. Simple. Paste a link, pick a quality, done.
 
 Runs on **macOS (Apple Silicon)** and **Windows**. Under the hood,
 [yt-dlp](https://github.com/yt-dlp/yt-dlp) downloads the VOD and ffmpeg remuxes it into an MP4.
 
 ## Features
 
+- Pick Twitch or YouTube at the top of the start screen (a pasted YouTube link switches by itself)
 - Paste a link → thumbnail, title, channel, duration
+- A timestamp in the link (`?t=…`, YouTube and Twitch) opens *Section only* with a one-minute clip
+  from there, ready to adjust
+- YouTube: qualities up to 1080p are H.264 + AAC, so the clips open in any editor (e.g. DaVinci
+  Resolve); YouTube sections are cut on the exact second
 - Or type a channel name → the VODs from the last 14 days as cards (grid or list); tick the ones
   you want, with one quality for all of them or a separate quality per VOD
 - Pick a quality (e.g. 1080p60, 720p60 … or audio only)
@@ -74,7 +79,9 @@ has to match `version`, otherwise the build fails. Pushing to `main` alone does 
 ## Limitations
 
 - Subscriber-only VODs are not supported (that would require a Twitch login).
-- VODs only, no clips and no chat. That is intentional.
+- Twitch: VODs only, no clips and no chat. That is intentional.
+- YouTube: single videos only (no playlists or channels), no live streams while they are running,
+  no members-only or private videos.
 - In the channel view you pick whole VODs and a quality step (Best, 1080p, 720p, 480p, audio only).
   If a VOD lacks that step, the next lower one is used. Sections (from / to) need a single VOD link.
 - The channel view shows up to the 30 newest VODs, limited to the last 14 days.

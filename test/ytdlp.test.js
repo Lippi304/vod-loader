@@ -40,3 +40,55 @@ test('recentOnly keeps the last N days and VODs with an unknown date', () => {
   ];
   assert.deepEqual(recentOnly(vods, 14, now).map((v) => v.id), ['new', 'edge', 'unknown']);
 });
+
+const { normalizeYouTube, parseYouTubeTime, linkTime, youTubeQualities, uploadDateToTs } = require('../lib/ytdlp');
+
+test('normalizeYouTube accepts the usual link forms and reads the start time', () => {
+  const id = 'ANoZNWQXYZ4';
+  const url = `https://www.youtube.com/watch?v=${id}`;
+  assert.deepEqual(normalizeYouTube(`https://youtu.be/${id}?is=SXOqvyqQHr9M081m`), { url, id, t: null });
+  assert.deepEqual(normalizeYouTube(`https://youtu.be/${id}?t=3938`), { url, id, t: 3938 });
+  assert.deepEqual(normalizeYouTube(`youtube.com/watch?v=${id}&t=1h5m38s`), { url, id, t: 3938 });
+  assert.deepEqual(normalizeYouTube(`https://m.youtube.com/watch?feature=share&v=${id}&t=95s`), { url, id, t: 95 });
+  assert.equal(normalizeYouTube(`https://www.youtube.com/shorts/${id}`).id, id);
+  assert.equal(normalizeYouTube(`https://www.youtube.com/live/${id}?si=abc`).id, id);
+  assert.equal(normalizeYouTube('https://www.youtube.com/@core'), null);
+  assert.equal(normalizeYouTube('https://www.twitch.tv/videos/2914030937'), null);
+  assert.equal(normalizeYouTube('papaplatte'), null);
+  assert.equal(normalizeYouTube(''), null);
+});
+
+test('YouTube links are not mistaken for Twitch VODs or channels', () => {
+  assert.equal(normalizeUrl('https://youtu.be/ANoZNWQXYZ4'), null);
+  assert.equal(parseChannel('https://youtu.be/ANoZNWQXYZ4'), null);
+});
+
+test('parseYouTubeTime and linkTime read start times', () => {
+  assert.equal(parseYouTubeTime('95'), 95);
+  assert.equal(parseYouTubeTime('95s'), 95);
+  assert.equal(parseYouTubeTime('2m'), 120);
+  assert.equal(parseYouTubeTime('1h2m3s'), 3723);
+  assert.equal(parseYouTubeTime('abc'), null);
+  assert.equal(parseYouTubeTime(''), null);
+  assert.equal(linkTime('https://www.twitch.tv/videos/2914030937?t=1h2m3s'), 3723);
+  assert.equal(linkTime('https://www.twitch.tv/videos/2914030937'), null);
+});
+
+test('youTubeQualities offers sensible steps plus audio, H.264 first', () => {
+  const formats = [
+    { format_id: '140', vcodec: 'none', acodec: 'mp4a' },
+    { format_id: '137', vcodec: 'avc1.640028', height: 1080 },
+    { format_id: '136', vcodec: 'avc1.4d401f', height: 720 },
+    { format_id: '247', vcodec: 'vp9', height: 720 },
+    { format_id: '18', vcodec: 'avc1', acodec: 'mp4a', height: 360 },
+  ];
+  const q = youTubeQualities(formats);
+  assert.deepEqual(q.map((x) => x.label), ['1080p', '720p', '480p', '360p', 'Audio only']);
+  assert.match(q[0].id, /^bv\*\[height<=1080\]\[vcodec\^=avc1\]\+ba\[ext=m4a\]/);
+  assert.ok(q.at(-1).audio);
+});
+
+test('uploadDateToTs turns YYYYMMDD into a timestamp', () => {
+  assert.equal(new Date(uploadDateToTs('20261108') * 1000).toISOString().slice(0, 10), '2026-11-08');
+  assert.equal(uploadDateToTs(undefined), null);
+});

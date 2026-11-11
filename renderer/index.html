@@ -23,7 +23,17 @@
     <section id="view-start" class="view center">
       <div class="app-icon"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></div>
       <h1>VOD Loader</h1>
-      <p class="muted">Paste a Twitch VOD link or type a channel name.</p>
+      <div class="source" role="radiogroup" aria-label="Source">
+        <button type="button" id="src-twitch" class="source-btn" role="radio" data-source="twitch">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.6 5.6a9 9 0 000 12.8M18.4 5.6a9 9 0 010 12.8"/></svg>
+          <span>Twitch</span>
+        </button>
+        <button type="button" id="src-youtube" class="source-btn" role="radio" data-source="youtube">
+          <svg viewBox="0 0 24 24"><path d="M8.5 5.8v12.4a.6.6 0 00.9.5l9.6-6.2a.6.6 0 000-1L9.4 5.3a.6.6 0 00-.9.5z"/></svg>
+          <span>YouTube</span>
+        </button>
+      </div>
+      <p id="start-hint" class="muted">Paste a Twitch VOD link or type a channel name.</p>
       <form id="url-form" class="field" autocomplete="off">
         <input id="url" type="text" spellcheck="false" placeholder="twitch.tv/videos/… or a channel" />
         <button type="submit" id="go" class="field-btn" aria-label="Continue">
