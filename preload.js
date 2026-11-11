@@ -3,7 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   platform: process.platform,
   setup: () => ipcRenderer.invoke('setup'),
-  lookup: (input) => ipcRenderer.invoke('lookup', input),
+  lookup: (input, source) => ipcRenderer.invoke('lookup', input, source),
   getDir: () => ipcRenderer.invoke('get-dir'),
   chooseDir: () => ipcRenderer.invoke('choose-dir'),
   download: (opts) => ipcRenderer.invoke('download', opts),

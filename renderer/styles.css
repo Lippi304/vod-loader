@@ -806,3 +806,46 @@ html.has-update { --bar: 56px; }
   cursor: pointer;
 }
 .update-btn:hover { background: var(--accent-hover); }
+
+/* Source picker (Twitch / YouTube) on the start screen */
+.source {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--fill);
+  margin-top: 2px;
+}
+.source-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.source-btn:hover { color: var(--text); }
+.source-btn.on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+.src-logo {
+  display: block;
+  object-fit: contain;
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+.src-logo-twitch { width: 14px; height: 16px; }
+.src-logo-youtube { width: 20px; height: 14px; }
+.source-btn:hover .src-logo,
+.source-btn.on .src-logo { opacity: 1; }
+.source-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); }

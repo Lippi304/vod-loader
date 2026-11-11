@@ -9,6 +9,7 @@ const isMac = api.platform === 'darwin';
 $('q-folder').textContent = isMac ? 'Show in Finder' : 'Show in Explorer';
 
 let vod = null;          // VOD currently shown (info view)
+let source = localStorage.getItem('source') === 'youtube' ? 'youtube' : 'twitch';
 const queue = [];        // all downloads of this session
 let running = false;
 let nextKey = 1;
@@ -74,6 +75,39 @@ function goStart() {
   $('url').focus();
 }
 
+// ---------- Source (Twitch / YouTube) ----------
+const SOURCES = {
+  twitch: {
+    hint: 'Paste a Twitch VOD link or type a channel name.',
+    placeholder: 'twitch.tv/videos/… or a channel',
+  },
+  youtube: {
+    hint: 'Paste a YouTube link. A timestamp in it sets the clip start.',
+    placeholder: 'youtube.com/watch?v=… or youtu.be/…',
+  },
+};
+const looksLikeYouTube = (text) => /(^|\/\/|\.)(youtube\.com|youtu\.be)\//i.test(String(text).trim());
+
+function setSource(next) {
+  source = next === 'youtube' ? 'youtube' : 'twitch';
+  localStorage.setItem('source', source);
+  for (const b of document.querySelectorAll('.source-btn')) {
+    const on = b.dataset.source === source;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-checked', String(on));
+  }
+  $('start-hint').textContent = SOURCES[source].hint;
+  $('url').placeholder = SOURCES[source].placeholder;
+  setError($('start-error'), '');
+}
+for (const b of document.querySelectorAll('.source-btn')) {
+  b.addEventListener('click', () => {
+    setSource(b.dataset.source);
+    $('url').focus();
+  });
+}
+setSource(source);
+
 // ---------- Updates ----------
 api.onUpdateReady(({ version }) => {
   $('update-text').textContent = `Version ${version} is ready`;
@@ -126,10 +160,11 @@ async function lookup() {
   const value = $('url').value.trim();
   if (!value || busy) return;
   busy = true;
+  if (looksLikeYouTube(value) && source !== 'youtube') setSource('youtube');
   setError($('start-error'), '');
   form.classList.add('loading');
   try {
-    const res = await api.lookup(value);
+    const res = await api.lookup(value, source);
     if (res.kind === 'channel') {
       renderChannel(res);
       show('channel');
@@ -175,14 +210,24 @@ function renderInfo() {
     sel.appendChild(o);
   }
 
-  $('section-toggle').checked = false;
-  $('section-rows').classList.remove('open');
+  // For YouTube, 1080p is the sensible default for clips (H.264, opens in every editor).
+  const hd = vod.source === 'youtube' && vod.qualities.find((q) => q.height === 1080);
+  if (hd) sel.value = hd.id;
+
   $('start').value = '';
   $('end').value = '';
   $('end').placeholder = fmtDuration(vod.duration) || '0:00:00';
+  // A timestamp in the link (?t=…) opens "Section only" with a one-minute clip from there.
+  const at = vod.startAt != null && vod.startAt < vod.duration ? vod.startAt : null;
+  $('section-toggle').checked = at != null;
+  $('section-rows').classList.toggle('open', at != null);
+  if (at != null) {
+    $('start').value = fmtDuration(at);
+    $('end').value = fmtDuration(Math.min(at + 60, vod.duration || at + 60));
+  }
   setError($('info-error'), '');
   $('download').textContent = running ? 'Add to queue' : 'Download';
-  $('back').textContent = queue.length ? 'Cancel' : 'Another VOD';
+  $('back').textContent = queue.length ? 'Cancel' : vod.source === 'youtube' ? 'Another video' : 'Another VOD';
 }
 
 // ---------- Options ----------
@@ -420,7 +465,7 @@ $('download').addEventListener('click', () => {
     (q) => q.vod.id === vod.id && q.start === sec.start && q.end === sec.end &&
       (q.status === 'queued' || q.status === 'active')
   );
-  if (dup) return setError($('info-error'), 'This VOD is already in the queue.');
+  if (dup) return setError($('info-error'), `This ${vod.source === 'youtube' ? 'clip' : 'VOD'} is already in the queue.`);
 
   queue.push({
     key: nextKey++,
@@ -456,6 +501,7 @@ async function processQueue() {
     const res = await api.download({
       url: item.vod.url,
       id: item.vod.id,
+      source: item.vod.source || 'twitch',
       formatId: item.formatId,
       audio: item.audio,
       start: item.start,
