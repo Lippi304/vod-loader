@@ -838,15 +838,14 @@ html.has-update { --bar: 56px; }
   color: var(--text);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
 }
-.source-btn svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.src-logo {
+  display: block;
+  object-fit: contain;
+  opacity: 0.55;
+  transition: opacity 0.2s;
 }
-.source-btn[data-source='twitch'].on svg { color: #9146ff; }
-.source-btn[data-source='youtube'].on svg { color: #ff3b30; fill: currentColor; }
+.src-logo-twitch { width: 14px; height: 16px; }
+.src-logo-youtube { width: 20px; height: 14px; }
+.source-btn:hover .src-logo,
+.source-btn.on .src-logo { opacity: 1; }
 .source-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); }
