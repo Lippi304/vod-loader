@@ -15,6 +15,8 @@ Runs on **macOS (Apple Silicon)** and **Windows**. Under the hood,
   Resolve); YouTube sections are cut on the exact second
 - Or type a channel name → the VODs from the last 14 days as cards (grid or list); tick the ones
   you want, with one quality for all of them or a separate quality per VOD
+- Favorite channels with the star next to the channel name; favorites and recently searched channels
+  appear as buttons on the start screen, so you don't have to type them again
 - Pick a quality (e.g. 1080p60, 720p60 … or audio only)
 - Optionally download just a section (from / to)
 - Queue: add several VODs, they are downloaded one after another

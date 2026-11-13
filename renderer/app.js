@@ -71,6 +71,7 @@ function goStart() {
   $('url').value = '';
   setError($('start-error'), '');
   updateStartLink();
+  renderSaved();
   show('start');
   $('url').focus();
 }
@@ -99,7 +100,104 @@ function setSource(next) {
   $('start-hint').textContent = SOURCES[source].hint;
   $('url').placeholder = SOURCES[source].placeholder;
   setError($('start-error'), '');
+  renderSaved();
 }
+
+// ---------- Favorite and recent channels ----------
+// Stored as display names; compared case-insensitively (Twitch names are case-insensitive).
+const RECENT_MAX = 6;
+const sameName = (a, b) => a.toLowerCase() === b.toLowerCase();
+
+function loadList(key) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(v) ? v.filter((n) => typeof n === 'string' && n) : [];
+  } catch (_) {
+    return [];
+  }
+}
+function saveList(key, list) {
+  try { localStorage.setItem(key, JSON.stringify(list)); } catch (_) {}
+}
+
+const favorites = () => loadList('favorites');
+const isFavorite = (name) => favorites().some((n) => sameName(n, name));
+
+function setFavorite(name, on) {
+  const list = favorites().filter((n) => !sameName(n, name));
+  if (on) list.push(name);
+  saveList('favorites', list);
+}
+
+function addRecent(name) {
+  const list = loadList('recent').filter((n) => !sameName(n, name));
+  list.unshift(name);
+  saveList('recent', list.slice(0, RECENT_MAX));
+}
+
+function removeRecent(name) {
+  saveList('recent', loadList('recent').filter((n) => !sameName(n, name)));
+}
+
+const ICON_STAR = '<svg viewBox="0 0 24 24"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></svg>';
+const ICON_CLOCK = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>';
+
+function makeChip(name, icon, onRemove, removeLabel) {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'chip-open';
+  open.title = `Show VODs from ${name}`;
+  open.innerHTML = icon;
+  open.append(document.createTextNode(name));
+  open.addEventListener('click', () => {
+    $('url').value = name;
+    lookup();
+  });
+  const rm = document.createElement('button');
+  rm.type = 'button';
+  rm.className = 'chip-rm';
+  rm.title = removeLabel;
+  rm.setAttribute('aria-label', `${removeLabel}: ${name}`);
+  rm.innerHTML = ICON_X;
+  rm.addEventListener('click', () => {
+    onRemove(name);
+    renderSaved();
+  });
+  chip.append(open, rm);
+  return chip;
+}
+
+function renderSaved() {
+  const favs = favorites();
+  const recent = loadList('recent').filter((n) => !favs.some((f) => sameName(f, n)));
+  $('fav-list').replaceChildren(...favs.map((n) => makeChip(n, ICON_STAR, (x) => setFavorite(x, false), 'Remove from favorites')));
+  $('recent-list').replaceChildren(...recent.map((n) => makeChip(n, ICON_CLOCK, removeRecent, 'Remove from recent')));
+  $('fav-block').hidden = !favs.length;
+  $('recent-block').hidden = !recent.length;
+  $('saved').hidden = source !== 'twitch' || (!favs.length && !recent.length);
+}
+
+$('recent-clear').addEventListener('click', () => {
+  saveList('recent', []);
+  renderSaved();
+});
+
+function updateFavButton(name) {
+  const on = isFavorite(name);
+  const btn = $('ch-fav');
+  btn.classList.toggle('on', on);
+  btn.setAttribute('aria-pressed', String(on));
+  btn.title = on ? 'Remove from favorites' : 'Add to favorites';
+  btn.setAttribute('aria-label', btn.title);
+}
+
+$('ch-fav').addEventListener('click', () => {
+  const name = $('ch-name').textContent;
+  setFavorite(name, !isFavorite(name));
+  updateFavButton(name);
+});
 for (const b of document.querySelectorAll('.source-btn')) {
   b.addEventListener('click', () => {
     setSource(b.dataset.source);
@@ -166,6 +264,8 @@ async function lookup() {
   try {
     const res = await api.lookup(value, source);
     if (res.kind === 'channel') {
+      // An empty list is often a typo, so only channels with VODs go into "Recent".
+      if (res.vods.length) addRecent(res.channel);
       renderChannel(res);
       show('channel');
     } else {
@@ -403,7 +503,10 @@ function renderChannel(res) {
   view.classList.remove('individual');
   $('ch-same').checked = true;
   fillQualities($('ch-quality'), 'best');
-  $('ch-name').textContent = res.channel;
+  // Keep the spelling the user saved as a favorite.
+  const fav = favorites().find((n) => sameName(n, res.channel));
+  $('ch-name').textContent = fav || res.channel;
+  updateFavButton(res.channel);
   $('ch-sub').textContent = `Last 14 days${res.vods.length ? ` · ${res.vods.length} ${res.vods.length === 1 ? 'VOD' : 'VODs'}` : ''}`;
   $('ch-empty').hidden = res.vods.length > 0;
   $('ch-grid').replaceChildren(...res.vods.map(makeCard));
