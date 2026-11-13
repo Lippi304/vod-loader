@@ -849,3 +849,138 @@ html.has-update { --bar: 56px; }
 .source-btn:hover .src-logo,
 .source-btn.on .src-logo { opacity: 1; }
 .source-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ---------- Favorite and recent channels (start screen) ---------- */
+.saved {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 6px;
+  text-align: left;
+}
+.saved[hidden],
+.saved-block[hidden] { display: none; }
+.saved-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 6px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.saved-label .link-btn {
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  max-width: 100%;
+  transition: border-color 0.2s;
+}
+.chip:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.chip-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  min-width: 0;
+  padding: 0 4px 0 12px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip-open svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#fav-list .chip-open svg { fill: #ffb800; stroke: #ffb800; }
+.chip-rm {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-right: 3px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.chip:hover .chip-rm,
+.chip-rm:focus-visible { opacity: 1; }
+.chip-rm:hover { background: var(--fill); }
+.chip-rm svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.chip-open:focus-visible,
+.chip-rm:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 16px; }
+
+/* Favorite star next to the channel name */
+.ch-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.fav-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.fav-btn:hover { background: var(--fill); }
+.fav-btn:active { transform: scale(0.9); }
+.fav-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  transition: fill 0.2s, stroke 0.2s;
+}
+.fav-btn.on svg { fill: #ffb800; stroke: #ffb800; }
+.fav-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); }
